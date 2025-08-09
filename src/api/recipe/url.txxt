@@ -1,0 +1,3 @@
+fetch Recipes
+/api/recipes/ - CREATE, POST, DELETE, GET
+

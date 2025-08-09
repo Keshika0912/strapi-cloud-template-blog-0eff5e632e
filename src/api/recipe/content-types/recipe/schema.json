@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "recipes",
+  "info": {
+    "singularName": "recipe",
+    "pluralName": "recipes",
+    "displayName": "recipe"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "cover_Image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "ingredients_array": {
+      "type": "component",
+      "component": "shared.ingredients",
+      "repeatable": true,
+      "required": true
+    },
+    "steps": {
+      "type": "blocks",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Veg",
+        "Non-Veg",
+        "Dessert",
+        "Cookies",
+        "Drinks"
+      ]
+    }
+  }
+}
