@@ -5,31 +5,36 @@ const { createStrapi, compileStrapi } = require('@strapi/strapi');
 async function seedRecipes() {
   let app;
   try {
-    console.log('🌱 Starting recipe seed...');
+    console.log('🚀 Starting recipe seeding process...');
     
+    // Compile and create Strapi instance
     const appContext = await compileStrapi();
     app = await createStrapi(appContext).load();
     
-    console.log('📚 Setting up recipe permissions...');
+    console.log('✅ Strapi instance loaded successfully');
     
-    // Find the public role
-    const publicRole = await app.query('plugin::users-permissions.role').findOne({
+    // Ensure public role exists
+    let publicRole = await app.query('plugin::users-permissions.role').findOne({
       where: { type: 'public' },
     });
 
     if (!publicRole) {
-      console.log('❌ Public role not found. Creating it...');
-      // Create public role if it doesn't exist
-      await app.query('plugin::users-permissions.role').create({
+      console.log('⚠️ Public role not found, creating it...');
+      publicRole = await app.query('plugin::users-permissions.role').create({
         data: {
-          type: 'public',
           name: 'Public',
           description: 'Default role given to unauthenticated user.',
+          type: 'public',
+          permissions: {},
         },
       });
+      console.log('✅ Created public role');
+    } else {
+      console.log('✅ Public role found');
     }
 
     // Set up recipe API permissions
+    console.log('🔐 Setting up recipe API permissions...');
     const recipePermissions = [
       'api::recipe.recipe.find',
       'api::recipe.recipe.findOne',
@@ -39,27 +44,31 @@ async function seedRecipes() {
     ];
 
     for (const permission of recipePermissions) {
-      const existingPermission = await app.query('plugin::users-permissions.permission').findOne({
-        where: {
-          action: permission,
-          role: publicRole.id,
-        },
-      });
-
-      if (!existingPermission) {
-        await app.query('plugin::users-permissions.permission').create({
-          data: {
+      try {
+        const existingPermission = await app.query('plugin::users-permissions.permission').findOne({
+          where: {
             action: permission,
             role: publicRole.id,
           },
         });
-        console.log(`✅ Created permission: ${permission}`);
-      } else {
-        console.log(`ℹ️ Permission already exists: ${permission}`);
+
+        if (!existingPermission) {
+          await app.query('plugin::users-permissions.permission').create({
+            data: {
+              action: permission,
+              role: publicRole.id,
+            },
+          });
+          console.log(`✅ Created permission: ${permission}`);
+        } else {
+          console.log(`ℹ️ Permission already exists: ${permission}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error creating permission ${permission}:`, error.message);
       }
     }
 
-    // Create some sample recipes if none exist
+    // Check if recipes already exist
     const existingRecipes = await app.query('api::recipe.recipe').findMany();
     
     if (existingRecipes.length === 0) {
@@ -84,39 +93,49 @@ async function seedRecipes() {
               ingredient: 'Chocolate chips',
               quantity: '2',
               unit: 'cups'
+            },
+            {
+              ingredient: 'Eggs',
+              quantity: '2',
+              unit: 'large'
+            },
+            {
+              ingredient: 'Vanilla extract',
+              quantity: '2',
+              unit: 'teaspoons'
             }
           ],
           steps: [
             {
-              type: 'paragraph',
-              children: [
-                {
-                  text: 'Preheat oven to 375°F (190°C).'
-                }
-              ]
+              __component: 'shared.rich-text',
+              body: 'Preheat oven to 375°F (190°C). Line baking sheets with parchment paper.'
             },
             {
-              type: 'paragraph',
-              children: [
-                {
-                  text: 'Cream butter and sugar until light and fluffy.'
-                }
-              ]
+              __component: 'shared.rich-text',
+              body: 'In a large bowl, cream together butter and sugar until light and fluffy.'
             },
             {
-              type: 'paragraph',
-              children: [
-                {
-                  text: 'Bake for 9-11 minutes until golden brown.'
-                }
-              ]
+              __component: 'shared.rich-text',
+              body: 'Beat in eggs one at a time, then stir in vanilla.'
+            },
+            {
+              __component: 'shared.rich-text',
+              body: 'Gradually blend in flour mixture, then stir in chocolate chips.'
+            },
+            {
+              __component: 'shared.rich-text',
+              body: 'Drop by rounded tablespoons onto prepared baking sheets.'
+            },
+            {
+              __component: 'shared.rich-text',
+              body: 'Bake for 9 to 11 minutes or until golden brown. Cool on baking sheets for 2 minutes.'
             }
           ],
           publishedAt: new Date()
         },
         {
-          title: 'Classic Margherita Pizza',
-          type: 'Veg',
+          title: 'Margherita Pizza',
+          type: 'Non-Veg',
           ingredients_array: [
             {
               ingredient: 'Pizza dough',
@@ -126,38 +145,48 @@ async function seedRecipes() {
             {
               ingredient: 'Fresh mozzarella',
               quantity: '8',
-              unit: 'oz'
+              unit: 'ounces'
             },
             {
-              ingredient: 'Fresh basil',
+              ingredient: 'Fresh basil leaves',
               quantity: '1/2',
               unit: 'cup'
+            },
+            {
+              ingredient: 'Tomato sauce',
+              quantity: '1/2',
+              unit: 'cup'
+            },
+            {
+              ingredient: 'Olive oil',
+              quantity: '2',
+              unit: 'tablespoons'
             }
           ],
           steps: [
             {
-              type: 'paragraph',
-              children: [
-                {
-                  text: 'Preheat oven to 500°F (260°C).'
-                }
-              ]
+              __component: 'shared.rich-text',
+              body: 'Preheat oven to 500°F (260°C) with a pizza stone if available.'
             },
             {
-              type: 'paragraph',
-              children: [
-                {
-                  text: 'Stretch dough and add toppings.'
-                }
-              ]
+              __component: 'shared.rich-text',
+              body: 'Roll out the pizza dough on a floured surface to desired thickness.'
             },
             {
-              type: 'paragraph',
-              children: [
-                {
-                  text: 'Bake for 10-12 minutes until crust is golden.'
-                }
-              ]
+              __component: 'shared.rich-text',
+              body: 'Spread tomato sauce evenly over the dough.'
+            },
+            {
+              __component: 'shared.rich-text',
+              body: 'Add fresh mozzarella slices and basil leaves.'
+            },
+            {
+              __component: 'shared.rich-text',
+              body: 'Drizzle with olive oil and season with salt and pepper.'
+            },
+            {
+              __component: 'shared.rich-text',
+              body: 'Bake for 10-12 minutes until crust is golden and cheese is bubbly.'
             }
           ],
           publishedAt: new Date()
@@ -165,10 +194,12 @@ async function seedRecipes() {
       ];
 
       for (const recipe of sampleRecipes) {
-        await app.query('api::recipe.recipe').create({
-          data: recipe
-        });
-        console.log(`✅ Created recipe: ${recipe.title}`);
+        try {
+          await app.query('api::recipe.recipe').create({ data: recipe });
+          console.log(`✅ Created recipe: ${recipe.title}`);
+        } catch (error) {
+          console.error(`❌ Error creating recipe ${recipe.title}:`, error.message);
+        }
       }
     } else {
       console.log(`ℹ️ Found ${existingRecipes.length} existing recipes`);
@@ -176,25 +207,45 @@ async function seedRecipes() {
 
     console.log('🎉 Recipe seeding completed successfully!');
     
+    // Test the API
+    console.log('🧪 Testing recipe API...');
+    try {
+      const testRecipes = await app.query('api::recipe.recipe').findMany({
+        populate: ['ingredients_array', 'steps']
+      });
+      console.log(`✅ API test successful: Found ${testRecipes.length} recipes`);
+      
+      if (testRecipes.length > 0) {
+        const firstRecipe = testRecipes[0];
+        console.log(`📝 Sample recipe: ${firstRecipe.title}`);
+        console.log(`   - Type: ${firstRecipe.type}`);
+        console.log(`   - Ingredients: ${firstRecipe.ingredients_array?.length || 0}`);
+        console.log(`   - Steps: ${firstRecipe.steps?.length || 0}`);
+      }
+    } catch (error) {
+      console.error('❌ API test failed:', error.message);
+    }
+
   } catch (error) {
     console.error('❌ Error during recipe seeding:', error);
     throw error;
   } finally {
     if (app) {
+      console.log('🧹 Cleaning up Strapi instance...');
       await app.destroy();
     }
   }
 }
 
-// Run the seed function
+// Run the seeding function
 if (require.main === module) {
   seedRecipes()
     .then(() => {
-      console.log('✅ Recipe seeding finished');
+      console.log('🎯 Seeding process completed!');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Recipe seeding failed:', error);
+      console.error('💥 Seeding process failed:', error);
       process.exit(1);
     });
 }
