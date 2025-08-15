@@ -4,7 +4,8 @@
   "info": {
     "singularName": "recipe",
     "pluralName": "recipes",
-    "displayName": "recipe"
+    "displayName": "Recipe",
+    "description": "Recipe content type for storing cooking recipes"
   },
   "options": {
     "draftAndPublish": true
@@ -13,11 +14,15 @@
   "attributes": {
     "title": {
       "type": "string",
-      "required": true
+      "required": true,
+      "unique": false,
+      "minLength": 1,
+      "maxLength": 255
     },
     "cover_Image": {
       "type": "media",
       "multiple": false,
+      "required": false,
       "allowedTypes": [
         "images"
       ]
@@ -26,11 +31,13 @@
       "type": "component",
       "component": "shared.ingredients",
       "repeatable": true,
-      "required": true
+      "required": true,
+      "min": 1
     },
     "steps": {
       "type": "blocks",
-      "required": true
+      "required": true,
+      "min": 1
     },
     "type": {
       "type": "enumeration",
@@ -41,6 +48,29 @@
         "Dessert",
         "Cookies",
         "Drinks"
+      ]
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": false
+    },
+    "description": {
+      "type": "text",
+      "required": false
+    },
+    "cooking_time": {
+      "type": "integer",
+      "required": false,
+      "min": 1
+    },
+    "difficulty": {
+      "type": "enumeration",
+      "required": false,
+      "enum": [
+        "Easy",
+        "Medium",
+        "Hard"
       ]
     }
   }

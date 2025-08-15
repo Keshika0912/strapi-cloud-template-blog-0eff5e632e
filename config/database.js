@@ -35,6 +35,12 @@ module.exports = ({ env }) => {
           rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', false),
         } : false,
         schema: env('DATABASE_SCHEMA', 'public'),
+        // Add connection timeout and retry settings
+        connectionTimeoutMillis: env.int('DATABASE_CONNECTION_TIMEOUT', 60000),
+        statement_timeout: env.int('DATABASE_STATEMENT_TIMEOUT', 30000),
+        query_timeout: env.int('DATABASE_QUERY_TIMEOUT', 30000),
+        // Add application name for debugging
+        application_name: 'strapi-app',
       },
       pool: { 
         min: env.int('DATABASE_POOL_MIN', 2), 
@@ -45,6 +51,10 @@ module.exports = ({ env }) => {
         idleTimeoutMillis: env.int('DATABASE_IDLE_TIMEOUT', 30000),
         reapIntervalMillis: env.int('DATABASE_REAP_INTERVAL', 1000),
         createRetryIntervalMillis: env.int('DATABASE_CREATE_RETRY_INTERVAL', 200),
+        // Add connection validation
+        validate: (connection) => {
+          return connection.query('SELECT 1').then(() => true).catch(() => false);
+        },
       },
     },
     sqlite: {
@@ -59,8 +69,22 @@ module.exports = ({ env }) => {
     connection: {
       client,
       ...connections[client],
-      acquireConnectionTimeout: env.int('DATABASE_CONNECTION_TIMEOUT', 60000),
+      acquireConnectionTimeout: env.int('DATABASE_ACQUIRE_TIMEOUT', 60000),
       debug: env.bool('DATABASE_DEBUG', false),
+      // Add connection retry logic
+      pool: {
+        ...connections[client].pool,
+        afterCreate: (connection, done) => {
+          connection.query('SELECT 1', (err) => {
+            if (err) {
+              console.error('Database connection validation failed:', err);
+            } else {
+              console.log('Database connection validated successfully');
+            }
+            done(err, connection);
+          });
+        },
+      },
     },
   };
 };

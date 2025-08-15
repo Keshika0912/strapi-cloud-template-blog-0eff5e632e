@@ -13,6 +13,9 @@ async function seedRecipes() {
     
     console.log('✅ Strapi instance loaded successfully');
     
+    // Wait for Strapi to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     // Ensure public role exists
     let publicRole = await app.query('plugin::users-permissions.role').findOne({
       where: { type: 'public' },
@@ -68,6 +71,17 @@ async function seedRecipes() {
       }
     }
 
+    // Test recipe content type accessibility
+    console.log('🧪 Testing recipe content type accessibility...');
+    try {
+      const recipeCount = await app.query('api::recipe.recipe').count();
+      console.log(`✅ Recipe content type accessible. Current count: ${recipeCount}`);
+    } catch (error) {
+      console.error('❌ Recipe content type test failed:', error.message);
+      console.error('This is likely the root cause of the 500 errors');
+      throw new Error('Recipe content type not accessible: ' + error.message);
+    }
+
     // Check if recipes already exist
     const existingRecipes = await app.query('api::recipe.recipe').findMany();
     
@@ -78,6 +92,9 @@ async function seedRecipes() {
         {
           title: 'Chocolate Chip Cookies',
           type: 'Cookies',
+          description: 'Classic homemade chocolate chip cookies',
+          cooking_time: 25,
+          difficulty: 'Easy',
           ingredients_array: [
             {
               ingredient: 'All-purpose flour',
@@ -136,6 +153,9 @@ async function seedRecipes() {
         {
           title: 'Margherita Pizza',
           type: 'Non-Veg',
+          description: 'Traditional Italian pizza with fresh mozzarella and basil',
+          cooking_time: 20,
+          difficulty: 'Medium',
           ingredients_array: [
             {
               ingredient: 'Pizza dough',
@@ -207,13 +227,13 @@ async function seedRecipes() {
 
     console.log('🎉 Recipe seeding completed successfully!');
     
-    // Test the API
-    console.log('🧪 Testing recipe API...');
+    // Final API test
+    console.log('🧪 Final API test...');
     try {
       const testRecipes = await app.query('api::recipe.recipe').findMany({
         populate: ['ingredients_array', 'steps']
       });
-      console.log(`✅ API test successful: Found ${testRecipes.length} recipes`);
+      console.log(`✅ Final test successful: Found ${testRecipes.length} recipes`);
       
       if (testRecipes.length > 0) {
         const firstRecipe = testRecipes[0];
@@ -223,7 +243,8 @@ async function seedRecipes() {
         console.log(`   - Steps: ${firstRecipe.steps?.length || 0}`);
       }
     } catch (error) {
-      console.error('❌ API test failed:', error.message);
+      console.error('❌ Final API test failed:', error.message);
+      throw error;
     }
 
   } catch (error) {

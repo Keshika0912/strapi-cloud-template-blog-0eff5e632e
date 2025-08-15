@@ -4,6 +4,9 @@ module.exports = async ({ strapi }) => {
   try {
     console.log('🚀 Starting Strapi bootstrap...');
     
+    // Wait a bit for Strapi to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     // Ensure public role exists
     let publicRole = await strapi.query('plugin::users-permissions.role').findOne({
       where: { type: 'public' },
@@ -24,7 +27,7 @@ module.exports = async ({ strapi }) => {
       console.log('✅ Public role found');
     }
 
-    // Set up recipe API permissions
+    // Set up ONLY recipe API permissions - focus on what we need
     console.log('🔐 Setting up recipe API permissions...');
     const recipePermissions = [
       'api::recipe.recipe.find',
@@ -59,47 +62,18 @@ module.exports = async ({ strapi }) => {
       }
     }
 
-    // Set up global content type permissions
-    console.log('🌐 Setting up global content type permissions...');
-    const globalPermissions = [
-      'api::article.article.find',
-      'api::article.article.findOne',
-      'api::category.category.find',
-      'api::category.category.findOne',
-      'api::author.author.find',
-      'api::author.author.findOne',
-      'api::global.global.find',
-      'api::global.global.findOne',
-      'api::about.about.find',
-      'api::about.about.findOne',
-    ];
-
-    for (const permission of globalPermissions) {
-      try {
-        const existingPermission = await strapi.query('plugin::users-permissions.permission').findOne({
-          where: {
-            action: permission,
-            role: publicRole.id,
-          },
-        });
-
-        if (!existingPermission) {
-          await strapi.query('plugin::users-permissions.permission').create({
-            data: {
-              action: permission,
-              role: publicRole.id,
-            },
-          });
-          console.log(`✅ Created permission: ${permission}`);
-        } else {
-          console.log(`ℹ️ Permission already exists: ${permission}`);
-        }
-      } catch (error) {
-        console.error(`❌ Error creating permission ${permission}:`, error.message);
-      }
+    console.log('🎉 Recipe API permissions setup completed!');
+    
+    // Test if recipe content type is accessible
+    try {
+      console.log('🧪 Testing recipe content type accessibility...');
+      const recipeCount = await strapi.query('api::recipe.recipe').count();
+      console.log(`✅ Recipe content type accessible. Current count: ${recipeCount}`);
+    } catch (error) {
+      console.error('❌ Recipe content type test failed:', error.message);
+      console.error('This might be the root cause of the 500 errors');
     }
 
-    console.log('🎉 Strapi bootstrap completed successfully!');
   } catch (error) {
     console.error('❌ Critical error during bootstrap:', error);
     // Don't throw - let Strapi continue

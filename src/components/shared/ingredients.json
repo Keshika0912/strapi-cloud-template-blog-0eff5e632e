@@ -1,21 +1,27 @@
 {
   "collectionName": "components_shared_ingredients",
   "info": {
-    "displayName": "ingredients"
+    "displayName": "Ingredients",
+    "description": "Recipe ingredient with name, quantity, and unit"
   },
   "options": {},
   "attributes": {
     "ingredient": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 1,
+      "maxLength": 255
     },
     "quantity": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 1,
+      "maxLength": 50
     },
     "unit": {
-      "type": "string"
+      "type": "string",
+      "required": false,
+      "maxLength": 50
     }
-  },
-  "config": {}
+  }
 }
