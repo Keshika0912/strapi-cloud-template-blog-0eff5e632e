@@ -269,6 +269,98 @@ async function main() {
 }
 
 
-module.exports = async () => {
-  await seedExampleApp();
+module.exports = async ({ strapi }) => {
+  // Set up public permissions for recipe API
+  try {
+    console.log('Setting up recipe API permissions...');
+    
+    // Find the public role
+    const publicRole = await strapi.query('plugin::users-permissions.role').findOne({
+      where: { type: 'public' },
+    });
+
+    if (publicRole) {
+      // Set permissions for recipe API
+      const recipePermissions = [
+        'api::recipe.recipe.find',
+        'api::recipe.recipe.findOne',
+        'api::recipe.recipe.create',
+        'api::recipe.recipe.update',
+        'api::recipe.recipe.delete',
+      ];
+
+      // Create permissions for each action
+      for (const permission of recipePermissions) {
+        const existingPermission = await strapi.query('plugin::users-permissions.permission').findOne({
+          where: {
+            action: permission,
+            role: publicRole.id,
+          },
+        });
+
+        if (!existingPermission) {
+          await strapi.query('plugin::users-permissions.permission').create({
+            data: {
+              action: permission,
+              role: publicRole.id,
+            },
+          });
+        }
+      }
+
+      console.log('✅ Recipe API permissions set up successfully');
+    } else {
+      console.log('⚠️ Public role not found, skipping permission setup');
+    }
+  } catch (error) {
+    console.error('❌ Error setting up recipe API permissions:', error.message);
+  }
+
+  // Set up global permissions for other content types
+  try {
+    console.log('Setting up global content type permissions...');
+    
+    const publicRole = await strapi.query('plugin::users-permissions.role').findOne({
+      where: { type: 'public' },
+    });
+
+    if (publicRole) {
+      const globalPermissions = [
+        'api::article.article.find',
+        'api::article.article.findOne',
+        'api::category.category.find',
+        'api::category.category.findOne',
+        'api::author.author.find',
+        'api::author.author.findOne',
+        'api::global.global.find',
+        'api::global.global.findOne',
+        'api::about.about.find',
+        'api::about.about.findOne',
+      ];
+
+      for (const permission of globalPermissions) {
+        const existingPermission = await strapi.query('plugin::users-permissions.permission').findOne({
+          where: {
+            action: permission,
+            role: publicRole.id,
+          },
+        });
+
+        if (!existingPermission) {
+          await strapi.query('plugin::users-permissions.permission').create({
+            data: {
+              action: permission,
+              role: publicRole.id,
+            },
+          });
+        }
+      }
+
+      console.log('✅ Global content type permissions set up successfully');
+    }
+  } catch (error) {
+    console.error('❌ Error setting up global permissions:', error.message);
+  }
+
+  console.log('🚀 Strapi bootstrap completed');
 };

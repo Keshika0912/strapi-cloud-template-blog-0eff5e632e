@@ -5,10 +5,15 @@
   },
   "options": {},
   "attributes": {
-    "name": {
-      "type": "string"
+    "ingredient": {
+      "type": "string",
+      "required": true
     },
     "quantity": {
+      "type": "string",
+      "required": true
+    },
+    "unit": {
       "type": "string"
     }
   },
